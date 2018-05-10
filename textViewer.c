@@ -112,12 +112,16 @@ void fb_close(FrameBuffer *fb){
 void drawText(FrameBuffer *gfb, int x, int y, char *msg, unsigned int colour, unsigned int bgcolour)
 {
 	int i, j, k;
+	int tabIndex;
 	unsigned char font[16];
 	unsigned int *pos;
 	
 	pos = (unsigned int*)gfb->start;
 
 	for (i = 0; i < strlen(msg); i++) {
+		if (msg[i] == '\t') {
+			msg[i] = ' ';
+		}
 		for (j = 0; j < 16; j++) {  // Save Individual Font
 			font[j] = fontdata_8x16[(msg[i] * 16) + j];
 		}
@@ -155,23 +159,22 @@ int countLines(const char *filename) {
 	return count;
 }
 
-int map(int x, int in_min, int in_max, int out_min, int out_max)
-{
-	  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+int map(int x, int in_min, int in_max, int out_min, int out_max) {
+	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// Scroll area = 70 to 650, x = 30 ~ 1250
+// Scroll area = 70 to 650, x = 1230 ~ 1250
 int scrollHeight = 0;
 void drawScroll(int index) {
 	int i, j;
 	int scrollStart = 0;
 	for (i = 1230; i < 1250; i++) {  // Draw Scroll Area, 1230 ~ 1250
 		for (j = 70; j < 650; j++) {  // 70 ~ 650
-			pos[j * 1280 + i] = 0xFF555555;  // Light Grey
+			pos[j * 1280 + i] = 0xFF555555;  // Light Grey, pos is global variable
 		}
 	}
 
-	scrollStart = map(index, 0, totalLine - 2, 70, 650 - scrollHeight);
+	scrollStart = map(index, 0, totalLine - 2, 70, 650 - scrollHeight);  // totalLine is global variable
 	for (i = 1230; i < 1250; i++) {
 		for (j = scrollStart; j < scrollStart + scrollHeight; j++) {
 			pos[j * 1280 + i] = 0xFFFFFF00;  // Yellow
@@ -180,7 +183,7 @@ void drawScroll(int index) {
 }
 
 void initScroll() {
-	// 35:totalLine = x:580
+	// 35:totalLine = x:650 - 70
 	// totalLine * x = 35 * 580
 	// x = 35 * 580 / totalLine
 	scrollHeight = 20300 / totalLine;
@@ -261,7 +264,7 @@ int main(int argc, char *argv[])
 
 	FILE *file;
 
-	char *cmdHelp = "Cmd> 'w' : up, 'x' : down, 'p': page up, 'n': page down, 'q' : quit";
+	char *cmdHelp = "Cmd> 'k' : up, 'j' : down, 'u': page up, 'd': page down, 'q' : quit";
 
 	if (argc !=	2) {
 		printf("Usage: textViewer [filename]\n");
@@ -368,20 +371,20 @@ int main(int argc, char *argv[])
 			{
 				case 'q': endFlag = 1;
 					break;
-				case 'w':  // up
+				case 'k':  // up
 					startLine = ((startLine - 1) >= 0) ? startLine - 1 : 0;	
 					drawPage(startLine);
 					break;
-				case 'x':  // down
+				case 'j':  // down
 					// startLine = ((startLine + 1) < totalLine - 35) ? startLine + 1 : startLine;
 					startLine = (startLine + 1 < totalLine - 1) ? startLine + 1 : startLine;
 					drawPage(startLine);
 					break;
-				case 'p':  // page up
+				case 'u':  // page up
 					startLine = ((startLine - 35) >= 0) ? startLine - 35 : 0;
 					drawPage(startLine);
 					break;
-				case 'n':  // page down
+				case 'd':  // page down
 					// startLine = ((startLine + 35) < totalLine - 35) ? startLine + 35 : totalLine - 37;
 					startLine = (startLine + 35 < totalLine - 1) ? startLine + 35 : totalLine - 2;
 					drawPage(startLine);
