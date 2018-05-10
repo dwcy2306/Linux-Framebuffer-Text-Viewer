@@ -2,4 +2,4 @@
 
 Text Viewer using linux framebuffer.
 
-usage: textView [filename]
+usage: textViewer [filename]
